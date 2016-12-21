@@ -1,4 +1,4 @@
-package test 
+﻿package test
 {
 	import flash.display.Bitmap;
 	import flash.display.BitmapData;
@@ -73,9 +73,10 @@ package test
 		/**用来画右边的书页*/
 		private var FPageMatrix:Matrix;
 		
-		
+		private var FDefaultBit:Bitmap;
 		
 		public var IsAutoPlay:Boolean = true;
+		public var IsPlaying:Boolean;
 		public var OnPageEnd:Function;
 		
 		//---- Property Fields -------------------------------------------------
@@ -432,8 +433,6 @@ package test
 			PageWidth:int,
 			PageHeight:int):void
 		{
-			var Index:int;
-			
 			FBookRes = Res;
 			book_root = new MovieClip();
 			FBookRes.addChild(book_root);
@@ -441,12 +440,7 @@ package test
 			book_width = PageWidth;
 			book_height = PageHeight;
 			
-			book_CrossGap = Math.sqrt(book_width * book_width + PageHeight * PageHeight);
-			
-			for (Index = 0; Index < PageBmd_Num; Index++) 
-			{
-				FBmdVec[Index] = new BitmapData(book_width, book_height);
-			}
+			book_CrossGap = Math.sqrt(book_width * book_width + book_height * book_height);		
 			
 			//往左位移一个页的宽度，用来画右边的书页
 			FPageMatrix = new Matrix(1, 0, 0, 1, -book_width, 0);
@@ -462,6 +456,9 @@ package test
 			book_toposArray=[p3,p4,p1,p2];
 			book_myposArray = [p1, p2, p3, p4];
 			
+			FDefaultBit = new Bitmap();
+			
+			book_root.addChild(FDefaultBit);
 			book_root.addChild(pageMC);
 			book_root.addChild(bgMC);
 			SetFilter(pageMC);
@@ -473,9 +470,7 @@ package test
 			book_root.addChild(render0);
 			book_root.addChild(shadow0);			
 			book_root.addChild(render1);
-			book_root.addChild(shadow1); 
-			
-			
+			book_root.addChild(shadow1);			
 		}
 		
 		/**
@@ -488,17 +483,24 @@ package test
 			Page1:BitmapData,
 			IsLeft:Boolean):void
 		{
+			var Index:int;
+			
+			for (Index = 0; Index < PageBmd_Num; Index++) 
+			{
+				FBmdVec[Index] = new BitmapData(book_width, book_height);
+			}
 			if (IsLeft)
 			{
 				FBmdVec[0].draw(Page0, FPageMatrix);
 				FBmdVec[1].draw(Page1);
+				FDefaultBit.bitmapData = Page0;
 			}
 			else
 			{
 				FBmdVec[0].draw(Page1);
 				FBmdVec[1].draw(Page0, FPageMatrix);
+				FDefaultBit.bitmapData = Page1;
 			}
-			
 			FBmdVec[2].draw(Page0);
 			FBmdVec[3].draw(Page1, FPageMatrix);
 			
@@ -506,6 +508,7 @@ package test
 		
 		public function Fliper():void
 		{
+			IsPlaying = true;
 			book_TimerArg0 = MouseFindArea(new Point(book_root.mouseX, book_root.mouseY));
 			book_TimerArg0 = book_TimerArg0 < 0? -book_TimerArg0:book_TimerArg0;
 			if (book_TimerArg0 == 0) return;
@@ -588,19 +591,19 @@ package test
 				
 				DrawPage(book_TimerArg0, new Point(book_px, book_py), FBmdVec[1], FBmdVec[0]);
 				
-				/*if (tmpx == 0 && tmpy == 0) 
+				if (tmpx == 0 && tmpy == 0) 
 				{					
 					render0.graphics.clear();
 					render1.graphics.clear();
 					shadow0.graphics.clear();
 					shadow1.graphics.clear();
 					
-					
+					IsPlaying = false;
 					for (var i:int = 0; i < PageBmd_Num; i++ )
 					{
 						FBmdVec[i].dispose();
 					}
-					
+					FDefaultBit.bitmapData = null;
 					while (bgMC.numChildren > 0) 
 					{
 						bgMC.removeChildAt(0);
@@ -613,7 +616,7 @@ package test
 					pageMC.addChild(b0);
 					pageMC.addChild(b1);
 					
-					book_TimerFlag = Book_Flag_Stop;//恢得静止状态
+					book_TimerFlag = Book_Flag_Stop;//恢复静止状态
 					
 					if (OnPageEnd != null)
 					{
@@ -622,7 +625,7 @@ package test
 					
 					bgMC.visible = false;
 					
-				}*/
+				}
 			}
 		}
 	}
